@@ -37,6 +37,10 @@ type Model struct {
 	// Selection state
 	SelectedSignal int // Index of selected signal
 
+	// Signal visibility
+	SignalVisible []bool // 各信号の表示/非表示（Signalsと同じ長さ）
+	SelectMode    bool   // true: 全信号選択モード
+
 	// Display state
 	Width           int // Terminal width
 	Height          int // Terminal height
@@ -60,6 +64,12 @@ func NewModel(vcdFile *vcd.VCDFile, filename string) Model {
 		return signals[i].Signal.FullName < signals[j].Signal.FullName
 	})
 
+	// Initialize signal visibility (all visible by default)
+	signalVisible := make([]bool, len(signals))
+	for i := range signalVisible {
+		signalVisible[i] = true
+	}
+
 	// Calculate initial time per char (show entire waveform by default)
 	timePerChar := uint64(1)
 	if vcdFile.EndTime > 0 {
@@ -80,6 +90,8 @@ func NewModel(vcdFile *vcd.VCDFile, filename string) Model {
 		CursorTime:      0,
 		CursorVisible:   true,
 		SelectedSignal:  0,
+		SignalVisible:   signalVisible,
+		SelectMode:      false,
 		Width:           80,
 		Height:          24,
 		SignalPaneWidth: 16,
@@ -194,17 +206,39 @@ func (m *Model) recalculateTimeWindow() {
 
 // MoveSignalUp moves selection up
 func (m *Model) MoveSignalUp() {
-	if m.SelectedSignal > 0 {
-		m.SelectedSignal--
-		m.adjustSignalScroll()
+	if m.SelectMode {
+		// 選択モード: 全信号内で移動
+		if m.SelectedSignal > 0 {
+			m.SelectedSignal--
+			m.adjustSignalScroll()
+		}
+	} else {
+		// 通常モード: 表示信号内で移動
+		indices := m.VisibleSignalIndices()
+		currentVisibleIdx := m.GlobalIndexToVisible(m.SelectedSignal)
+		if currentVisibleIdx > 0 {
+			m.SelectedSignal = indices[currentVisibleIdx-1]
+			m.adjustSignalScroll()
+		}
 	}
 }
 
 // MoveSignalDown moves selection down
 func (m *Model) MoveSignalDown() {
-	if m.SelectedSignal < len(m.Signals)-1 {
-		m.SelectedSignal++
-		m.adjustSignalScroll()
+	if m.SelectMode {
+		// 選択モード: 全信号内で移動
+		if m.SelectedSignal < len(m.Signals)-1 {
+			m.SelectedSignal++
+			m.adjustSignalScroll()
+		}
+	} else {
+		// 通常モード: 表示信号内で移動
+		indices := m.VisibleSignalIndices()
+		currentVisibleIdx := m.GlobalIndexToVisible(m.SelectedSignal)
+		if currentVisibleIdx >= 0 && currentVisibleIdx < len(indices)-1 {
+			m.SelectedSignal = indices[currentVisibleIdx+1]
+			m.adjustSignalScroll()
+		}
 	}
 }
 
@@ -212,10 +246,24 @@ func (m *Model) MoveSignalDown() {
 func (m *Model) adjustSignalScroll() {
 	visibleCount := m.VisibleSignalCount()
 
-	if m.SelectedSignal < m.SignalScrollOffset {
-		m.SignalScrollOffset = m.SelectedSignal
-	} else if m.SelectedSignal >= m.SignalScrollOffset+visibleCount {
-		m.SignalScrollOffset = m.SelectedSignal - visibleCount + 1
+	if m.SelectMode {
+		// 選択モード: 全信号を対象にスクロール
+		if m.SelectedSignal < m.SignalScrollOffset {
+			m.SignalScrollOffset = m.SelectedSignal
+		} else if m.SelectedSignal >= m.SignalScrollOffset+visibleCount {
+			m.SignalScrollOffset = m.SelectedSignal - visibleCount + 1
+		}
+	} else {
+		// 通常モード: 表示信号リスト内での位置を計算
+		visibleIdx := m.GlobalIndexToVisible(m.SelectedSignal)
+		if visibleIdx < 0 {
+			return
+		}
+		if visibleIdx < m.SignalScrollOffset {
+			m.SignalScrollOffset = visibleIdx
+		} else if visibleIdx >= m.SignalScrollOffset+visibleCount {
+			m.SignalScrollOffset = visibleIdx - visibleCount + 1
+		}
 	}
 }
 
@@ -319,4 +367,87 @@ func (m *Model) Search(query string) {
 		m.SelectedSignal = m.SearchResult[0]
 		m.adjustSignalScroll()
 	}
+}
+
+// VisibleSignalIndices returns indices of visible signals
+func (m *Model) VisibleSignalIndices() []int {
+	var indices []int
+	for i, visible := range m.SignalVisible {
+		if visible {
+			indices = append(indices, i)
+		}
+	}
+	return indices
+}
+
+// ToggleSignalVisibility toggles visibility of the selected signal
+func (m *Model) ToggleSignalVisibility() {
+	if m.SelectedSignal >= 0 && m.SelectedSignal < len(m.SignalVisible) {
+		m.SignalVisible[m.SelectedSignal] = !m.SignalVisible[m.SelectedSignal]
+	}
+}
+
+// SetAllSignalsVisible sets visibility for all signals
+func (m *Model) SetAllSignalsVisible(visible bool) {
+	for i := range m.SignalVisible {
+		m.SignalVisible[i] = visible
+	}
+}
+
+// VisibleIndexToGlobal converts a visible signal index to global index
+func (m *Model) VisibleIndexToGlobal(visibleIdx int) int {
+	indices := m.VisibleSignalIndices()
+	if visibleIdx >= 0 && visibleIdx < len(indices) {
+		return indices[visibleIdx]
+	}
+	return 0
+}
+
+// GlobalIndexToVisible converts a global signal index to visible index (-1 if not visible)
+func (m *Model) GlobalIndexToVisible(globalIdx int) int {
+	indices := m.VisibleSignalIndices()
+	for i, idx := range indices {
+		if idx == globalIdx {
+			return i
+		}
+	}
+	return -1
+}
+
+// EnterSelectMode enters signal selection mode
+func (m *Model) EnterSelectMode() {
+	m.SelectMode = true
+	m.SignalScrollOffset = 0
+	m.adjustSignalScroll()
+}
+
+// ExitSelectMode exits signal selection mode
+func (m *Model) ExitSelectMode() {
+	m.SelectMode = false
+	// 現在選択中の信号が非表示の場合、最初の表示信号を選択
+	if !m.SignalVisible[m.SelectedSignal] {
+		indices := m.VisibleSignalIndices()
+		if len(indices) > 0 {
+			m.SelectedSignal = indices[0]
+		}
+	}
+	m.SignalScrollOffset = 0
+	m.adjustSignalScroll()
+}
+
+// ToggleSelectMode toggles signal selection mode
+func (m *Model) ToggleSelectMode() {
+	if m.SelectMode {
+		m.ExitSelectMode()
+	} else {
+		m.EnterSelectMode()
+	}
+}
+
+// DisplaySignalCount returns the number of signals to display (depends on mode)
+func (m *Model) DisplaySignalCount() int {
+	if m.SelectMode {
+		return len(m.Signals)
+	}
+	return len(m.VisibleSignalIndices())
 }

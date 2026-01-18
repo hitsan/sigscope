@@ -92,6 +92,28 @@ func handleKey(m model.Model, msg tea.KeyMsg) (model.Model, tea.Cmd) {
 	case "/":
 		m.Mode = model.ModeSearch
 		m.SearchQuery = ""
+
+	// Signal selection mode
+	case "s":
+		m.ToggleSelectMode()
+
+	// Toggle signal visibility (select mode only)
+	case " ":
+		if m.SelectMode {
+			m.ToggleSignalVisibility()
+		}
+
+	// Show all signals (select mode only)
+	case "a":
+		if m.SelectMode {
+			m.SetAllSignalsVisible(true)
+		}
+
+	// Hide all signals (select mode only)
+	case "A":
+		if m.SelectMode {
+			m.SetAllSignalsVisible(false)
+		}
 	}
 
 	return m, nil

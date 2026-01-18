@@ -125,7 +125,7 @@ func renderBus(sig *vcd.SignalData, startTime uint64, timePerChar float64, resul
 				result[seg.startIdx] = CharBusRise
 			}
 			for i := seg.startIdx + 1; i < seg.endIdx; i++ {
-				result[i] = CharHigh
+				result[i] = " "
 			}
 		} else {
 			// Show transition at start

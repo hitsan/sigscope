@@ -22,6 +22,10 @@ var (
 	SelectedMarker = "▶"
 	NormalMarker   = " "
 
+	// Checkbox markers for select mode
+	CheckedMarker   = "☑"
+	UncheckedMarker = "☐"
+
 	// Waveform styles
 	WaveformStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("40"))
