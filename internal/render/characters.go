@@ -4,14 +4,11 @@ package render
 
 const (
 	// Single-bit waveform characters
-	CharHigh      = "─"  // High level
-	CharLow       = "_"  // Low level (using underscore for visibility)
-	CharRiseEdge  = "┌"  // Rising edge
-	CharFallEdge  = "┐"  // Falling edge
-	CharRiseLow   = "┘"  // Low after rise
-	CharFallHigh  = "└"  // High after fall
-	CharUnknown   = "?"  // Unknown value
-	CharHighZ     = "~"  // High impedance
+	CharHigh    = "▔"  // High level (upper line)
+	CharLow     = "▁"  // Low level (lower line)
+	CharEdge    = "│"  // Edge (vertical line connecting high and low)
+	CharUnknown = "?"  // Unknown value
+	CharHighZ   = "~"  // High impedance
 
 	// Bus signal characters (GTKWave style)
 	CharBusRise   = "╱"  // Bus transition start

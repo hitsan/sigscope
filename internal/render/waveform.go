@@ -37,21 +37,15 @@ func renderSingleBit(sig *vcd.SignalData, startTime uint64, timePerChar float64,
 
 		// Check for transitions within this character
 		hasTransition := false
-		transitionUp := false
 		for _, change := range sig.Changes {
 			if change.Time > charStartTime && change.Time <= charEndTime {
 				hasTransition = true
-				transitionUp = change.Value == "1"
 				break
 			}
 		}
 
 		if hasTransition {
-			if transitionUp {
-				result[i] = CharRiseEdge
-			} else {
-				result[i] = CharFallEdge
-			}
+			result[i] = CharEdge
 		} else {
 			switch endValue {
 			case "1":
