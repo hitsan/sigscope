@@ -97,24 +97,12 @@ func renderStatusBar(m model.Model) string {
 		// Search mode
 		status = fmt.Sprintf(" Search: %s█", m.SearchQuery)
 	} else {
-		// Normal mode - show cursor time and value
+		// Normal mode - show cursor time
 		timeStr := formatTimeStatus(m.CursorTime)
-
-		// Get current value of selected signal
-		valueStr := ""
-		if sig := m.SelectedSignalData(); sig != nil {
-			value := sig.GetValueAt(m.CursorTime)
-			if sig.Signal.Width == 1 {
-				valueStr = fmt.Sprintf("Value: %s", value)
-			} else {
-				valueStr = fmt.Sprintf("Value: 0x%s", binaryToHexStatus(value, sig.Signal.Width))
-			}
-		}
-
 		zoomStr := fmt.Sprintf("Zoom: %.1fx", m.Zoom)
-		helpStr := "j/k:↑↓ h/l:←→ +/-:zoom /:search q:quit"
+		helpStr := "j/k:↑↓ h/l:←→ +/-:zoom s:select /:search q:quit"
 
-		status = fmt.Sprintf(" Time: %s | %s | %s | %s", timeStr, valueStr, zoomStr, helpStr)
+		status = fmt.Sprintf(" Time: %s | %s | %s", timeStr, zoomStr, helpStr)
 	}
 
 	// Pad to full width
@@ -140,43 +128,6 @@ func formatTimeStatus(t uint64) string {
 		return fmt.Sprintf("%.2fns", float64(t)/1000)
 	}
 	return fmt.Sprintf("%dps", t)
-}
-
-// binaryToHexStatus converts binary string to hex for status display
-func binaryToHexStatus(binary string, width int) string {
-	if strings.Contains(binary, "x") || strings.Contains(binary, "X") {
-		return "XX"
-	}
-	if strings.Contains(binary, "z") || strings.Contains(binary, "Z") {
-		return "ZZ"
-	}
-
-	// Pad binary to proper width
-	for len(binary) < width {
-		binary = "0" + binary
-	}
-
-	// Pad to multiple of 4
-	remainder := len(binary) % 4
-	if remainder != 0 {
-		binary = strings.Repeat("0", 4-remainder) + binary
-	}
-
-	// Convert each nibble
-	var hex strings.Builder
-	for i := 0; i < len(binary); i += 4 {
-		nibble := binary[i : i+4]
-		val := 0
-		for _, c := range nibble {
-			val = val*2
-			if c == '1' {
-				val++
-			}
-		}
-		hex.WriteString(fmt.Sprintf("%X", val))
-	}
-
-	return hex.String()
 }
 
 // padRight pads a string to the specified width
