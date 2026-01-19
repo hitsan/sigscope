@@ -10,9 +10,9 @@ const (
 	CharUnknown = "?"  // Unknown value
 	CharHighZ   = "~"  // High impedance
 
-	// Bus signal characters (GTKWave style)
-	CharBusRise   = "╱"  // Bus transition start
-	CharBusFall   = "╲"  // Bus transition end
+	// Bus signal characters
+	CharBusRise   = "<"  // Bus transition start
+	CharBusFall   = ">"  // Bus transition end
 	CharBusHigh   = "▔"  // Bus top line
 	CharBusLow    = "▁"  // Bus bottom line
 	CharBusMiddle = " "  // Bus middle (for value display)
