@@ -32,13 +32,15 @@ func renderSingleBit(sig *vcd.SignalData, startTime uint64, timePerChar float64,
 		charStartTime := startTime + uint64(float64(i)*timePerChar)
 		charEndTime := startTime + uint64(float64(i+1)*timePerChar)
 
-		// Get value at end of this character position
-		endValue := sig.GetValueAt(charEndTime)
+		// Use the value at the start of this cell so boundary changes don't shift left
+		startValue := sig.GetValueAt(charStartTime)
 
 		// Check for transitions within this character
 		hasTransition := false
 		for _, change := range sig.Changes {
-			if change.Time > charStartTime && change.Time <= charEndTime {
+			// Include transitions exactly at the start of this cell; exclude the end
+			// so edges align with the cell boundary instead of drifting right.
+			if change.Time >= charStartTime && change.Time < charEndTime {
 				hasTransition = true
 				break
 			}
@@ -47,7 +49,7 @@ func renderSingleBit(sig *vcd.SignalData, startTime uint64, timePerChar float64,
 		if hasTransition {
 			result[i] = CharEdge
 		} else {
-			switch endValue {
+			switch startValue {
 			case "1":
 				result[i] = CharHigh
 			case "0":
@@ -82,7 +84,9 @@ func renderBus(sig *vcd.SignalData, startTime uint64, timePerChar float64, resul
 
 		// Check for value change in this character
 		for _, change := range sig.Changes {
-			if change.Time > charTime && change.Time <= charEndTime {
+			// Treat changes at the cell start as belonging to this cell,
+			// and exclude the end to avoid right-shifted edges.
+			if change.Time >= charTime && change.Time < charEndTime {
 				// End current segment
 				if i > currentStartIdx {
 					segments = append(segments, segment{
@@ -159,10 +163,8 @@ func renderBus(sig *vcd.SignalData, startTime uint64, timePerChar float64, resul
 				}
 			}
 
-			// Show transition at end (if not last segment)
-			if seg.endIdx < width {
-				result[seg.endIdx-1] = CharBusFall
-			}
+			// Do not draw a trailing marker; drawing only at the change cell
+			// keeps bus transitions aligned with single-bit edges.
 		}
 	}
 }

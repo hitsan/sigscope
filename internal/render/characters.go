@@ -11,8 +11,8 @@ const (
 	CharHighZ   = "~"  // High impedance
 
 	// Bus signal characters
-	CharBusRise   = "<"  // Bus transition start
-	CharBusFall   = ">"  // Bus transition end
+	CharBusRise   = "X"  // Bus transition marker (single cell)
+	CharBusFall   = "X"  // Kept for compatibility; not used when rendering single-cell markers
 	CharBusHigh   = "▔"  // Bus top line
 	CharBusLow    = "▁"  // Bus bottom line
 	CharBusMiddle = " "  // Bus middle (for value display)
