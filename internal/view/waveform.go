@@ -29,8 +29,9 @@ func renderNormalModeWaveforms(m model.Model) string {
 		endIdx = len(indices)
 	}
 
-	// Get cursor position
+	// Get cursor and grid positions
 	cursorPos, cursorVisible := render.RenderCursor(m.CursorTime, m.TimeStart, m.TimeEnd, width)
+	gridPositions := GetGridPositions(m)
 
 	for vi := startIdx; vi < endIdx; vi++ {
 		globalIdx := indices[vi]
@@ -38,17 +39,21 @@ func renderNormalModeWaveforms(m model.Model) string {
 
 		// Render waveform for this signal
 		waveform := render.RenderWaveform(sig, m.TimeStart, m.TimeEnd, width)
+		runes := []rune(waveform)
 
-		// Apply cursor overlay if visible
-		if m.CursorVisible && cursorVisible && cursorPos >= 0 && cursorPos < len(waveform) {
-			// Convert to runes for proper handling
-			runes := []rune(waveform)
-			if cursorPos < len(runes) {
-				// Replace character at cursor position with cursor marker
-				cursorLine := string(runes[:cursorPos]) + CursorStyle.Render(render.CharCursor) + string(runes[cursorPos+1:])
-				waveform = cursorLine
+		// Apply grid lines
+		for _, pos := range gridPositions {
+			if pos < len(runes) && runes[pos] == ' ' {
+				runes[pos] = '┊'
 			}
 		}
+
+		// Apply cursor overlay if visible
+		if m.CursorVisible && cursorVisible && cursorPos >= 0 && cursorPos < len(runes) {
+			runes[cursorPos] = '│'
+		}
+
+		waveform = string(runes)
 
 		// Apply different style for selected signal
 		if globalIdx == m.SelectedSignal {
@@ -79,31 +84,34 @@ func renderSelectModeWaveforms(m model.Model) string {
 		endIdx = len(m.Signals)
 	}
 
-	// Get cursor position
+	// Get cursor and grid positions
 	cursorPos, cursorVisible := render.RenderCursor(m.CursorTime, m.TimeStart, m.TimeEnd, width)
+	gridPositions := GetGridPositions(m)
 
 	for i := startIdx; i < endIdx; i++ {
-		var waveform string
+		var runes []rune
 
 		if m.SignalVisible[i] {
 			sig := m.Signals[i]
-			// Render waveform for this signal
-			waveform = render.RenderWaveform(sig, m.TimeStart, m.TimeEnd, width)
-
-			// Apply cursor overlay if visible
-			if m.CursorVisible && cursorVisible && cursorPos >= 0 && cursorPos < len(waveform) {
-				// Convert to runes for proper handling
-				runes := []rune(waveform)
-				if cursorPos < len(runes) {
-					// Replace character at cursor position with cursor marker
-					cursorLine := string(runes[:cursorPos]) + CursorStyle.Render(render.CharCursor) + string(runes[cursorPos+1:])
-					waveform = cursorLine
-				}
-			}
+			waveform := render.RenderWaveform(sig, m.TimeStart, m.TimeEnd, width)
+			runes = []rune(waveform)
 		} else {
-			// Hidden signal: show empty line
-			waveform = strings.Repeat(" ", width)
+			runes = []rune(strings.Repeat(" ", width))
 		}
+
+		// Apply grid lines
+		for _, pos := range gridPositions {
+			if pos < len(runes) && runes[pos] == ' ' {
+				runes[pos] = '┊'
+			}
+		}
+
+		// Apply cursor overlay if visible
+		if m.CursorVisible && cursorVisible && cursorPos >= 0 && cursorPos < len(runes) {
+			runes[cursorPos] = '│'
+		}
+
+		waveform := string(runes)
 
 		// Apply different style for selected signal
 		if i == m.SelectedSignal {

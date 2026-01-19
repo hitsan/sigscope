@@ -101,6 +101,34 @@ func findNiceInterval(timeRange uint64, targetTicks int) uint64 {
 	return rough * multiplier
 }
 
+// GetGridPositions returns positions for vertical grid lines
+func GetGridPositions(m model.Model) []int {
+	width := m.WaveformWidth()
+	timeRange := m.TimeEnd - m.TimeStart
+	if timeRange == 0 || width <= 0 {
+		return nil
+	}
+
+	tickInterval := findNiceInterval(timeRange, width/15)
+	if tickInterval == 0 {
+		return nil
+	}
+
+	var positions []int
+	firstTick := ((m.TimeStart / tickInterval) + 1) * tickInterval
+	if m.TimeStart == 0 {
+		firstTick = tickInterval
+	}
+
+	for t := firstTick; t <= m.TimeEnd; t += tickInterval {
+		pos := int(float64(t-m.TimeStart) / float64(timeRange) * float64(width))
+		if pos > 0 && pos < width {
+			positions = append(positions, pos)
+		}
+	}
+	return positions
+}
+
 // formatTime formats a time value with appropriate unit
 func formatTime(t uint64) string {
 	if t == 0 {
