@@ -94,7 +94,7 @@ func NewModel(vcdFile *vcd.VCDFile, filename string) Model {
 		SelectMode:      false,
 		Width:           80,
 		Height:          24,
-		SignalPaneWidth: 16,
+		SignalPaneWidth: 22,
 		Mode:            ModeNormal,
 	}
 }
