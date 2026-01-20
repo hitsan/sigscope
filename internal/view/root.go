@@ -3,6 +3,7 @@ package view
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"wave/internal/model"
 
@@ -97,12 +98,24 @@ func renderStatusBar(m model.Model) string {
 		// Search mode
 		status = fmt.Sprintf(" Search: %s█", m.SearchQuery)
 	} else {
-		// Normal mode - show cursor time
-		timeStr := formatTimeStatus(m.CursorTime)
-		zoomStr := fmt.Sprintf("Zoom: %.1fx", m.Zoom)
-		helpStr := "j/k:↑↓ h/l:←→ +/-:zoom s:select /:search q:quit"
+		// エラー表示（優先度: ReloadError > WatchError > 通常表示）
+		if m.ReloadError != "" {
+			status = fmt.Sprintf(" ERROR: Failed to reload: %s", m.ReloadError)
+		} else if m.WatchError != "" {
+			status = fmt.Sprintf(" WARN: Watch error: %s", m.WatchError)
+		} else {
+			timeStr := formatTimeStatus(m.CursorTime)
+			zoomStr := fmt.Sprintf("Zoom: %.1fx", m.Zoom)
+			helpStr := "j/k:↑↓ h/l:←→ +/-:zoom s:select /:search q:quit"
 
-		status = fmt.Sprintf(" Time: %s | %s | %s", timeStr, zoomStr, helpStr)
+			// 再読み込み通知（3秒間表示）
+			reloadIndicator := ""
+			if !m.LastReloadTime.IsZero() && time.Since(m.LastReloadTime) < 3*time.Second {
+				reloadIndicator = "[RELOADED] "
+			}
+
+			status = fmt.Sprintf(" %sTime: %s | %s | %s", reloadIndicator, timeStr, zoomStr, helpStr)
+		}
 	}
 
 	// Pad to full width

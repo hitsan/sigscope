@@ -1,7 +1,11 @@
 package update
 
 import (
+	"time"
+
 	"wave/internal/model"
+	"wave/internal/vcd"
+	"wave/internal/watcher"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -15,6 +19,10 @@ func Update(m model.Model, msg tea.Msg) (model.Model, tea.Cmd) {
 		m.Width = msg.Width
 		m.Height = msg.Height
 		return m, nil
+	case watcher.FileChangedMsg:
+		return handleFileChanged(m, msg)
+	case watcher.FileWatchErrorMsg:
+		return handleWatchError(m, msg)
 	}
 	return m, nil
 }
@@ -138,4 +146,53 @@ func handleSearchKey(m model.Model, msg tea.KeyMsg) (model.Model, tea.Cmd) {
 		}
 	}
 	return m, nil
+}
+
+func handleFileChanged(m model.Model, msg watcher.FileChangedMsg) (model.Model, tea.Cmd) {
+	if msg.Error != nil {
+		m.WatchError = msg.Error.Error()
+		return m, watcher.WatchFile(m.Filename)
+	}
+
+	// VCDファイルを再パース
+	vcdFile, err := vcd.Parse(m.Filename)
+	if err != nil {
+		m.ReloadError = err.Error()
+		return m, watcher.WatchFile(m.Filename)
+	}
+
+	// 現在の状態を保存
+	savedState := model.ViewState{
+		CursorTime:         m.CursorTime,
+		SelectedSignal:     m.SelectedSignal,
+		TimeStart:          m.TimeStart,
+		TimeEnd:            m.TimeEnd,
+		Zoom:               m.Zoom,
+		SignalScrollOffset: m.SignalScrollOffset,
+		SelectMode:         m.SelectMode,
+		SignalVisible:      append([]bool{}, m.SignalVisible...),
+		SignalNames:        m.ExtractSignalNames(),
+	}
+
+	// 新しいモデルを構築
+	newModel := model.NewModel(vcdFile, m.Filename)
+
+	// 状態を復元
+	newModel.RestoreViewState(savedState)
+
+	// 端末サイズを復元
+	newModel.Width = m.Width
+	newModel.Height = m.Height
+
+	// 再読み込み成功を記録
+	newModel.LastReloadTime = time.Now()
+	newModel.ReloadError = ""
+	newModel.WatchError = ""
+
+	return newModel, watcher.WatchFile(m.Filename)
+}
+
+func handleWatchError(m model.Model, msg watcher.FileWatchErrorMsg) (model.Model, tea.Cmd) {
+	m.WatchError = msg.Error.Error()
+	return m, watcher.WatchFile(m.Filename)
 }

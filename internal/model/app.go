@@ -3,6 +3,7 @@ package model
 import (
 	"sort"
 	"strings"
+	"time"
 
 	"wave/internal/vcd"
 
@@ -53,6 +54,11 @@ type Model struct {
 
 	// Scroll state for signal list
 	SignalScrollOffset int
+
+	// File watching state
+	WatchError     string
+	ReloadError    string
+	LastReloadTime time.Time
 }
 
 // NewModel creates a new Model with VCD data
@@ -450,4 +456,81 @@ func (m *Model) DisplaySignalCount() int {
 		return len(m.Signals)
 	}
 	return len(m.VisibleSignalIndices())
+}
+
+// ViewState holds the current view state for restoration after reload
+type ViewState struct {
+	CursorTime         uint64
+	SelectedSignal     int
+	TimeStart          uint64
+	TimeEnd            uint64
+	Zoom               float64
+	SignalScrollOffset int
+	SelectMode         bool
+	SignalVisible      []bool   // 信号可視性を保持
+	SignalNames        []string // 名前でマッチング用
+}
+
+// RestoreViewState restores the view state after VCD reload
+func (m *Model) RestoreViewState(state ViewState) {
+	// カーソル位置復元（範囲チェック）
+	if state.CursorTime <= m.VCD.EndTime {
+		m.CursorTime = state.CursorTime
+	} else {
+		m.CursorTime = m.VCD.EndTime
+	}
+
+	// 選択信号復元（範囲チェック）
+	if state.SelectedSignal < len(m.Signals) {
+		m.SelectedSignal = state.SelectedSignal
+	} else if len(m.Signals) > 0 {
+		m.SelectedSignal = 0
+	}
+
+	// 時間ウィンドウ復元（範囲チェック）
+	if state.TimeStart <= m.VCD.EndTime && state.TimeEnd <= m.VCD.EndTime {
+		m.TimeStart = state.TimeStart
+		m.TimeEnd = state.TimeEnd
+	} else {
+		m.TimeStart = 0
+		m.TimeEnd = m.VCD.EndTime
+	}
+
+	// ズームレベル復元
+	m.Zoom = state.Zoom
+
+	// スクロールオフセット復元
+	m.SignalScrollOffset = state.SignalScrollOffset
+	m.adjustSignalScroll()
+
+	// 選択モード復元
+	m.SelectMode = state.SelectMode
+
+	// 信号可視性を復元（名前でマッチング）
+	m.SignalVisible = make([]bool, len(m.Signals))
+	nameToVisible := make(map[string]bool)
+	for i, name := range state.SignalNames {
+		if i < len(state.SignalVisible) {
+			nameToVisible[name] = state.SignalVisible[i]
+		}
+	}
+
+	// 新しい信号リストに対して名前でマッチング
+	for i, sig := range m.Signals {
+		if visible, found := nameToVisible[sig.Signal.FullName]; found {
+			m.SignalVisible[i] = visible
+		} else {
+			// 新規信号はデフォルトで表示
+			m.SignalVisible[i] = true
+		}
+	}
+}
+
+// ExtractSignalNames extracts signal names for state preservation
+func (m Model) ExtractSignalNames() []string {
+	names := make([]string, len(m.Signals))
+	for i, sig := range m.Signals {
+		names[i] = sig.Signal.FullName
+	}
+	return names
 }

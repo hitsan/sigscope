@@ -8,6 +8,7 @@ import (
 	"wave/internal/update"
 	"wave/internal/vcd"
 	"wave/internal/view"
+	"wave/internal/watcher"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -45,7 +46,7 @@ type appModel struct {
 }
 
 func (a appModel) Init() tea.Cmd {
-	return nil
+	return watcher.WatchFile(a.Model.Filename)
 }
 
 func (a appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
