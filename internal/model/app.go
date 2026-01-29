@@ -114,10 +114,12 @@ func (m Model) Init() tea.Cmd {
 func (m Model) VisibleSignalCount() int {
 	// Reserve lines for: title, timeline, separator, status bar
 	available := m.Height - 4
-	if available < 1 {
+	// Each signal takes 2 lines (upper and lower)
+	signalCount := available / 2
+	if signalCount < 1 {
 		return 1
 	}
-	return available
+	return signalCount
 }
 
 // WaveformWidth returns the width available for waveform display

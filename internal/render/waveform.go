@@ -8,65 +8,96 @@ import (
 	"sigscope/internal/vcd"
 )
 
+// WaveformLines represents a 2-line waveform display
+type WaveformLines struct {
+	Upper string // Upper line
+	Lower string // Lower line
+}
+
 // RenderWaveform renders a signal's waveform for the given time window
-func RenderWaveform(sig *vcd.SignalData, startTime, endTime uint64, width int) string {
+// Returns two lines: upper and lower for 2-line display
+func RenderWaveform(sig *vcd.SignalData, startTime, endTime uint64, width int) WaveformLines {
 	if width <= 0 || endTime <= startTime {
-		return ""
+		return WaveformLines{"", ""}
 	}
 
 	timePerChar := float64(endTime-startTime) / float64(width)
-	result := make([]string, width)
+	upperResult := make([]string, width)
+	lowerResult := make([]string, width)
 
 	if sig.Signal.Width == 1 {
-		renderSingleBit(sig, startTime, timePerChar, result)
+		renderSingleBit(sig, startTime, timePerChar, upperResult, lowerResult)
 	} else {
-		renderBus(sig, startTime, timePerChar, result, width)
+		renderBus(sig, startTime, timePerChar, upperResult, lowerResult, width)
 	}
 
-	return strings.Join(result, "")
+	return WaveformLines{
+		Upper: strings.Join(upperResult, ""),
+		Lower: strings.Join(lowerResult, ""),
+	}
 }
 
-// renderSingleBit renders a single-bit signal
-func renderSingleBit(sig *vcd.SignalData, startTime uint64, timePerChar float64, result []string) {
-	for i := range result {
+// renderSingleBit renders a single-bit signal in 2-line format
+func renderSingleBit(sig *vcd.SignalData, startTime uint64, timePerChar float64, upper []string, lower []string) {
+	for i := range upper {
 		charStartTime := startTime + uint64(float64(i)*timePerChar)
 		charEndTime := startTime + uint64(float64(i+1)*timePerChar)
 
-		// Use the value at the start of this cell so boundary changes don't shift left
+		// Use the value at the start of this cell
 		startValue := sig.GetValueAt(charStartTime)
 
 		// Check for transitions within this character
+		var transitionTo string
 		hasTransition := false
 		for _, change := range sig.Changes {
-			// Include transitions exactly at the start of this cell; exclude the end
-			// so edges align with the cell boundary instead of drifting right.
 			if change.Time >= charStartTime && change.Time < charEndTime {
 				hasTransition = true
+				transitionTo = change.Value
 				break
 			}
 		}
 
 		if hasTransition {
-			result[i] = CharEdge
+			// Determine transition direction
+			switch {
+			case startValue == "1" && transitionTo == "0":
+				// High to Low
+				upper[i] = "┐"
+				lower[i] = "└"
+			case startValue == "0" && transitionTo == "1":
+				// Low to High
+				upper[i] = "┌"
+				lower[i] = "┘"
+			default:
+				// Unknown transition
+				upper[i] = "│"
+				lower[i] = "│"
+			}
 		} else {
+			// Stable state
 			switch startValue {
 			case "1":
-				result[i] = CharHigh
+				upper[i] = "─"
+				lower[i] = " "
 			case "0":
-				result[i] = CharLow
+				upper[i] = " "
+				lower[i] = "─"
 			case "x", "X":
-				result[i] = CharUnknown
+				upper[i] = "?"
+				lower[i] = "?"
 			case "z", "Z":
-				result[i] = CharHighZ
+				upper[i] = "~"
+				lower[i] = "~"
 			default:
-				result[i] = CharUnknown
+				upper[i] = "?"
+				lower[i] = "?"
 			}
 		}
 	}
 }
 
-// renderBus renders a multi-bit bus signal (GTKWave style)
-func renderBus(sig *vcd.SignalData, startTime uint64, timePerChar float64, result []string, width int) {
+// renderBus renders a multi-bit bus signal (GTKWave style) in 2-line format
+func renderBus(sig *vcd.SignalData, startTime uint64, timePerChar float64, upper []string, lower []string, width int) {
 	// Find all value changes in the visible window
 	type segment struct {
 		startIdx int
@@ -112,59 +143,54 @@ func renderBus(sig *vcd.SignalData, startTime uint64, timePerChar float64, resul
 	}
 
 	// Initialize with spaces
-	for i := range result {
-		result[i] = " "
+	for i := range upper {
+		upper[i] = " "
+		lower[i] = " "
 	}
 
-	// Render each segment
+	// Render each segment with upper/lower half blocks
 	for _, seg := range segments {
 		segWidth := seg.endIdx - seg.startIdx
 
 		// Convert binary value to hex
 		hexValue := binaryToHex(seg.value, sig.Signal.Width)
 
-		if segWidth <= 2 {
-			// Too narrow for value, just show transitions
-			if seg.startIdx > 0 {
-				result[seg.startIdx] = CharBusRise
-			}
-			for i := seg.startIdx + 1; i < seg.endIdx; i++ {
-				result[i] = " "
-			}
-		} else {
-			// Show transition at start
-			if seg.startIdx > 0 {
-				result[seg.startIdx] = CharBusRise
-			}
+		// Fill with lower half block (▄) in upper line and upper half block (▀) in lower line
+		// This creates a filled band in the middle
+		for i := seg.startIdx; i < seg.endIdx; i++ {
+			upper[i] = "▄"
+			lower[i] = "▀"
+		}
 
-			// Calculate space for value
+		// Show transition as empty space at segment boundaries
+		if seg.startIdx > 0 {
+			upper[seg.startIdx] = " "
+			lower[seg.startIdx] = " "
+		}
+
+		// Display value in the center if there's enough space
+		if segWidth > len(hexValue)+2 {
 			valueStart := seg.startIdx
 			if seg.startIdx > 0 {
 				valueStart = seg.startIdx + 1
 			}
-			valueEnd := seg.endIdx - 1
+			valueEnd := seg.endIdx
 
-			// Center the hex value
 			availableWidth := valueEnd - valueStart
-			if availableWidth > 0 {
-				displayValue := hexValue
-				if len(displayValue) > availableWidth {
-					displayValue = displayValue[:availableWidth]
-				}
-
-				padding := (availableWidth - len(displayValue)) / 2
-				for i := valueStart; i < valueEnd; i++ {
-					relPos := i - valueStart
-					if relPos >= padding && relPos < padding+len(displayValue) {
-						result[i] = string(displayValue[relPos-padding])
-					} else {
-						result[i] = " "
-					}
-				}
+			displayValue := hexValue
+			if len(displayValue) > availableWidth {
+				displayValue = displayValue[:availableWidth]
 			}
 
-			// Do not draw a trailing marker; drawing only at the change cell
-			// keeps bus transitions aligned with single-bit edges.
+			// Center the value across both lines for better visibility
+			padding := (availableWidth - len(displayValue)) / 2
+			for idx, ch := range displayValue {
+				pos := valueStart + padding + idx
+				if pos < seg.endIdx {
+					// Place value characters on upper line
+					upper[pos] = string(ch)
+				}
+			}
 		}
 	}
 }

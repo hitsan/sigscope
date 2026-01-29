@@ -37,29 +37,39 @@ func renderNormalModeWaveforms(m model.Model) string {
 		globalIdx := indices[vi]
 		sig := m.Signals[globalIdx]
 
-		// Render waveform for this signal
+		// Render waveform for this signal (2 lines)
 		waveform := render.RenderWaveform(sig, m.TimeStart, m.TimeEnd, width)
-		runes := []rune(waveform)
+		upperRunes := []rune(waveform.Upper)
+		lowerRunes := []rune(waveform.Lower)
 
-		// Apply grid lines
+		// Apply grid lines to both lines
 		for _, pos := range gridPositions {
-			if pos < len(runes) && runes[pos] == ' ' {
-				runes[pos] = '┊'
+			if pos < len(upperRunes) && upperRunes[pos] == ' ' {
+				upperRunes[pos] = '┊'
+			}
+			if pos < len(lowerRunes) && lowerRunes[pos] == ' ' {
+				lowerRunes[pos] = '┊'
 			}
 		}
 
-		// Apply cursor overlay if visible
-		if m.CursorVisible && cursorVisible && cursorPos >= 0 && cursorPos < len(runes) {
-			runes[cursorPos] = '│'
+		// Apply cursor overlay if visible to both lines
+		if m.CursorVisible && cursorVisible && cursorPos >= 0 && cursorPos < len(upperRunes) {
+			upperRunes[cursorPos] = '│'
+			if cursorPos < len(lowerRunes) {
+				lowerRunes[cursorPos] = '│'
+			}
 		}
 
-		waveform = string(runes)
+		upperLine := string(upperRunes)
+		lowerLine := string(lowerRunes)
 
 		// Apply different style for selected signal
 		if globalIdx == m.SelectedSignal {
-			lines = append(lines, SelectedSignalStyle.Render(waveform))
+			lines = append(lines, SelectedSignalStyle.Render(upperLine))
+			lines = append(lines, SelectedSignalStyle.Render(lowerLine))
 		} else {
-			lines = append(lines, WaveformStyle.Render(waveform))
+			lines = append(lines, WaveformStyle.Render(upperLine))
+			lines = append(lines, WaveformStyle.Render(lowerLine))
 		}
 	}
 
@@ -89,35 +99,46 @@ func renderSelectModeWaveforms(m model.Model) string {
 	gridPositions := GetGridPositions(m)
 
 	for i := startIdx; i < endIdx; i++ {
-		var runes []rune
+		var upperRunes, lowerRunes []rune
 
 		if m.SignalVisible[i] {
 			sig := m.Signals[i]
 			waveform := render.RenderWaveform(sig, m.TimeStart, m.TimeEnd, width)
-			runes = []rune(waveform)
+			upperRunes = []rune(waveform.Upper)
+			lowerRunes = []rune(waveform.Lower)
 		} else {
-			runes = []rune(strings.Repeat(" ", width))
+			upperRunes = []rune(strings.Repeat(" ", width))
+			lowerRunes = []rune(strings.Repeat(" ", width))
 		}
 
-		// Apply grid lines
+		// Apply grid lines to both lines
 		for _, pos := range gridPositions {
-			if pos < len(runes) && runes[pos] == ' ' {
-				runes[pos] = '┊'
+			if pos < len(upperRunes) && upperRunes[pos] == ' ' {
+				upperRunes[pos] = '┊'
+			}
+			if pos < len(lowerRunes) && lowerRunes[pos] == ' ' {
+				lowerRunes[pos] = '┊'
 			}
 		}
 
-		// Apply cursor overlay if visible
-		if m.CursorVisible && cursorVisible && cursorPos >= 0 && cursorPos < len(runes) {
-			runes[cursorPos] = '│'
+		// Apply cursor overlay if visible to both lines
+		if m.CursorVisible && cursorVisible && cursorPos >= 0 && cursorPos < len(upperRunes) {
+			upperRunes[cursorPos] = '│'
+			if cursorPos < len(lowerRunes) {
+				lowerRunes[cursorPos] = '│'
+			}
 		}
 
-		waveform := string(runes)
+		upperLine := string(upperRunes)
+		lowerLine := string(lowerRunes)
 
 		// Apply different style for selected signal
 		if i == m.SelectedSignal {
-			lines = append(lines, SelectedSignalStyle.Render(waveform))
+			lines = append(lines, SelectedSignalStyle.Render(upperLine))
+			lines = append(lines, SelectedSignalStyle.Render(lowerLine))
 		} else {
-			lines = append(lines, WaveformStyle.Render(waveform))
+			lines = append(lines, WaveformStyle.Render(upperLine))
+			lines = append(lines, WaveformStyle.Render(lowerLine))
 		}
 	}
 

@@ -54,7 +54,9 @@ func renderNormalModeList(m model.Model) string {
 			line = SignalNameStyle.Render(NormalMarker + name)
 		}
 
+		// Add signal name line and empty line (2 lines per signal)
 		lines = append(lines, line)
+		lines = append(lines, strings.Repeat(" ", m.SignalPaneWidth))
 	}
 
 	// Pad with empty lines if needed
@@ -108,7 +110,9 @@ func renderSelectModeList(m model.Model) string {
 			line = SignalNameStyle.Render(NormalMarker + checkbox + " " + name)
 		}
 
+		// Add signal name line and empty line (2 lines per signal)
 		lines = append(lines, line)
+		lines = append(lines, strings.Repeat(" ", m.SignalPaneWidth))
 	}
 
 	// Pad with empty lines if needed
