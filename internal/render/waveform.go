@@ -125,7 +125,7 @@ func renderBusOneLine(sig *vcd.SignalData, startTime uint64, timePerChar float64
 				result[seg.startIdx] = CharBusRise
 			}
 			for i := seg.startIdx + 1; i < seg.endIdx; i++ {
-				result[i] = " "
+				result[i] = "="
 			}
 		} else {
 			// Show transition at start
@@ -138,7 +138,7 @@ func renderBusOneLine(sig *vcd.SignalData, startTime uint64, timePerChar float64
 			if seg.startIdx > 0 {
 				valueStart = seg.startIdx + 1
 			}
-			valueEnd := seg.endIdx - 1
+			valueEnd := seg.endIdx
 
 			// Center the hex value
 			availableWidth := valueEnd - valueStart
@@ -148,10 +148,12 @@ func renderBusOneLine(sig *vcd.SignalData, startTime uint64, timePerChar float64
 					displayValue = displayValue[:availableWidth]
 				}
 
+				// Fill with '=' first
 				padding := (availableWidth - len(displayValue)) / 2
 				for i := valueStart; i < valueEnd; i++ {
-					result[i] = " "
+					result[i] = "-"
 				}
+				// Overwrite with hex value
 				for idx, ch := range displayValue {
 					pos := valueStart + padding + idx
 					if pos < valueEnd {
