@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"wave/internal/model"
+	"sigscope/internal/model"
 )
 
 // RenderSignalList renders the signal name list (left pane)

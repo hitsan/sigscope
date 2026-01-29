@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"wave/internal/model"
+	"sigscope/internal/model"
 )
 
 // RenderTimeline renders the time axis header

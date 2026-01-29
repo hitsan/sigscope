@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"os"
 
-	"wave/internal/model"
-	"wave/internal/update"
-	"wave/internal/vcd"
-	"wave/internal/view"
-	"wave/internal/watcher"
+	"sigscope/internal/model"
+	"sigscope/internal/update"
+	"sigscope/internal/vcd"
+	"sigscope/internal/view"
+	"sigscope/internal/watcher"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "Usage: wave <vcd-file>")
+		fmt.Fprintln(os.Stderr, "Usage: sigscope <vcd-file>")
 		os.Exit(1)
 	}
 

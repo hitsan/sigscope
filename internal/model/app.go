@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"wave/internal/vcd"
+	"sigscope/internal/vcd"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

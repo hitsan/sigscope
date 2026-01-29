@@ -3,8 +3,8 @@ package view
 import (
 	"strings"
 
-	"wave/internal/model"
-	"wave/internal/render"
+	"sigscope/internal/model"
+	"sigscope/internal/render"
 )
 
 // RenderWaveforms renders all visible signal waveforms (right pane)

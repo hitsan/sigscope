@@ -3,9 +3,9 @@ package update
 import (
 	"time"
 
-	"wave/internal/model"
-	"wave/internal/vcd"
-	"wave/internal/watcher"
+	"sigscope/internal/model"
+	"sigscope/internal/vcd"
+	"sigscope/internal/watcher"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

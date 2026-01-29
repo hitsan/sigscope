@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"wave/internal/vcd"
+	"sigscope/internal/vcd"
 )
 
 // RenderWaveform renders a signal's waveform for the given time window

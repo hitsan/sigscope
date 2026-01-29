@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"wave/internal/model"
+	"sigscope/internal/model"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -35,7 +35,7 @@ func Render(m model.Model) string {
 
 // renderTitle renders the title bar
 func renderTitle(m model.Model) string {
-	title := fmt.Sprintf(" wave - %s ", m.Filename)
+	title := fmt.Sprintf(" sigscope - %s ", m.Filename)
 	width := m.Width
 	if len(title) < width {
 		title = title + strings.Repeat(" ", width-len(title))
