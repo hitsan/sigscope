@@ -197,7 +197,7 @@ func (m *Model) ResetZoom() {
 // recalculateTimeWindow recalculates time window based on zoom and cursor
 func (m *Model) recalculateTimeWindow() {
 	waveWidth := uint64(m.WaveformWidth())
-	visibleDuration := waveWidth * m.TimePerChar / uint64(m.Zoom)
+	visibleDuration := uint64(float64(waveWidth*m.TimePerChar) / m.Zoom)
 
 	// Center on cursor if visible, otherwise on current window center
 	center := m.CursorTime
