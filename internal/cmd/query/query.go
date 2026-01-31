@@ -27,7 +27,29 @@ func (s *stringSlice) Set(value string) error {
 // Run executes the query command
 func Run(args []string) error {
 	// Parse flags
-	fs := flag.NewFlagSet("query", flag.ExitOnError)
+	fs := flag.NewFlagSet("query", flag.ContinueOnError)
+	fs.Usage = func() {
+		fmt.Fprintln(os.Stderr, `Usage: sigscope query [OPTIONS] <vcd-file>
+
+Query waveform data in differential event format optimized for LLM consumption.
+
+Options:
+  -s, --signals <pattern>      Signal name pattern (can be repeated for multiple patterns)
+  -t, --time-start <time>      Start time (default: 0)
+  -e, --time-end <time>        End time (default: VCD end time)
+  -h, --help                   Show this help message
+
+Output Format:
+  Compact JSON with differential events (only changed signals per timestamp).
+  Includes automatic clock detection and signal metadata.
+
+Examples:
+  sigscope query waveform.vcd                         # All signals, full time range
+  sigscope query -s clk -s data waveform.vcd          # Specific signals only
+  sigscope query -t 1000 -e 5000 waveform.vcd         # Time range [1000, 5000]
+  sigscope query -s "udp_rx" waveform.vcd             # Partial name match`)
+	}
+
 	var signals stringSlice
 	fs.Var(&signals, "s", "Signal name pattern (can be repeated)")
 	fs.Var(&signals, "signals", "Signal name pattern (can be repeated)")
@@ -41,11 +63,15 @@ func Run(args []string) error {
 	fs.Uint64Var(&timeEnd, "time-end", 0, "End time (0 = use VCD end time)")
 
 	if err := fs.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return nil
+		}
 		return err
 	}
 
 	if fs.NArg() < 1 {
-		return fmt.Errorf("usage: sigscope query [OPTIONS] <vcd-file>")
+		fs.Usage()
+		return fmt.Errorf("missing VCD file argument")
 	}
 
 	filename := fs.Arg(0)

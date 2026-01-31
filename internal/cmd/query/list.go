@@ -11,6 +11,21 @@ import (
 
 // RunList executes the list command
 func RunList(args []string) error {
+	// Check for help flag
+	if len(args) > 0 && (args[0] == "-h" || args[0] == "--help") {
+		fmt.Fprintln(os.Stderr, `Usage: sigscope list <vcd-file>
+
+List all signals in the VCD file with metadata.
+
+Output Format:
+  JSON with signal names, widths, timescale, and time range.
+
+Examples:
+  sigscope list waveform.vcd                    # List all signals
+  sigscope list waveform.vcd | jq '.signals'    # Extract signals array`)
+		return nil
+	}
+
 	if len(args) < 1 {
 		return fmt.Errorf("usage: sigscope list <vcd-file>")
 	}

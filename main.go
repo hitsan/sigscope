@@ -16,8 +16,14 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "Usage: sigscope <vcd-file>")
+		printUsage()
 		os.Exit(1)
+	}
+
+	// Check for help flag
+	if os.Args[1] == "-h" || os.Args[1] == "--help" || os.Args[1] == "help" {
+		printUsage()
+		os.Exit(0)
 	}
 
 	// Check for subcommands
@@ -76,4 +82,27 @@ func (a appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (a appModel) View() string {
 	return view.Render(a.Model)
+}
+
+func printUsage() {
+	fmt.Fprintln(os.Stderr, `Usage: sigscope <command> [options] [arguments]
+
+Commands:
+  list <vcd-file>              List all signals in VCD file
+  query [OPTIONS] <vcd-file>   Query waveform data in differential event format
+  <vcd-file>                   Launch TUI viewer (default)
+
+Query Options:
+  -s, --signals <pattern>      Signal name pattern (can be repeated)
+  -t, --time-start <time>      Start time (default: 0)
+  -e, --time-end <time>        End time (default: VCD end time)
+
+Examples:
+  sigscope waveform.vcd                           # Launch TUI
+  sigscope list waveform.vcd                      # List all signals
+  sigscope query waveform.vcd                     # Query all signals
+  sigscope query -s clk -s data waveform.vcd      # Query specific signals
+  sigscope query -t 1000 -e 5000 waveform.vcd     # Query time range
+
+Use "sigscope <command> --help" for more information about a command.`)
 }
