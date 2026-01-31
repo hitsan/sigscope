@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"sigscope/internal/cmd/query"
 	"sigscope/internal/model"
 	"sigscope/internal/update"
 	"sigscope/internal/vcd"
@@ -19,6 +20,25 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Check for subcommands
+	if len(os.Args) >= 2 {
+		switch os.Args[1] {
+		case "list":
+			if err := query.RunList(os.Args[2:]); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
+			return
+		case "query":
+			if err := query.Run(os.Args[2:]); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
+			return
+		}
+	}
+
+	// Default: launch TUI
 	filename := os.Args[1]
 
 	// Parse VCD file
