@@ -2,10 +2,17 @@ package query
 
 // QueryOutput represents the JSON output for query command
 type QueryOutput struct {
-	Timescale string            `json:"timescale"`
-	Clock     *ClockInfo        `json:"clock,omitempty"`
-	Init      map[string]any    `json:"init"`
-	Events    []Event           `json:"events"`
+	Timescale string               `json:"timescale"`
+	Defs      map[string]SignalDef `json:"defs"`
+	Clock     *ClockInfo           `json:"clock,omitempty"`
+	Init      map[string]string    `json:"init"`
+	Events    []Event              `json:"events"`
+}
+
+// SignalDef contains signal definition metadata
+type SignalDef struct {
+	Width int    `json:"w"`
+	Radix string `json:"radix,omitempty"` // "hex" or "bin" for multi-bit signals
 }
 
 // ClockInfo contains detected clock information
@@ -17,15 +24,8 @@ type ClockInfo struct {
 
 // Event represents a timestamped set of signal changes
 type Event struct {
-	Time uint64         `json:"t"`
-	Set  map[string]any `json:"set"`
-}
-
-// ValueWithMeta represents a multi-bit value with metadata
-type ValueWithMeta struct {
-	Value string `json:"v"`
-	Width int    `json:"w"`
-	Radix string `json:"radix"` // "hex" or "bin"
+	Time uint64            `json:"t"`
+	Set  map[string]string `json:"set"`
 }
 
 // ListOutput represents the JSON output for list command

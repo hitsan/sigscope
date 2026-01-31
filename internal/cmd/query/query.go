@@ -73,6 +73,9 @@ func Run(args []string) error {
 	allSignals := vcdFile.GetSignalList()
 	clock := detectClock(allSignals, timeStart, timeEnd)
 
+	// Build signal definitions
+	defs := buildDefs(matchedSignals)
+
 	// Build initial values
 	init := buildInit(matchedSignals, timeStart)
 
@@ -82,14 +85,14 @@ func Run(args []string) error {
 	// Build output
 	output := QueryOutput{
 		Timescale: vcdFile.Timescale,
+		Defs:      defs,
 		Clock:     clock,
 		Init:      init,
 		Events:    events,
 	}
 
-	// Output JSON
+	// Output JSON (compact, no indentation)
 	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetIndent("", "  ")
 	return encoder.Encode(output)
 }
 
@@ -180,9 +183,43 @@ func detectClock(signals []*vcd.SignalData, startTime, endTime uint64) *ClockInf
 	return nil
 }
 
+// buildDefs constructs the signal definitions map
+func buildDefs(signals []*vcd.SignalData) map[string]SignalDef {
+	defs := make(map[string]SignalDef)
+
+	for _, sig := range signals {
+		name := shortName(sig.Signal.FullName)
+		def := SignalDef{
+			Width: sig.Signal.Width,
+		}
+
+		// Only set radix for multi-bit signals
+		if sig.Signal.Width > 1 {
+			// Determine radix by checking if any value contains x/z
+			hasXZ := false
+			for _, ch := range sig.Changes {
+				if strings.ContainsAny(ch.Value, "xXzZ") {
+					hasXZ = true
+					break
+				}
+			}
+
+			if hasXZ {
+				def.Radix = "bin"
+			} else {
+				def.Radix = "hex"
+			}
+		}
+
+		defs[name] = def
+	}
+
+	return defs
+}
+
 // buildInit constructs the initial value map
-func buildInit(signals []*vcd.SignalData, startTime uint64) map[string]any {
-	init := make(map[string]any)
+func buildInit(signals []*vcd.SignalData, startTime uint64) map[string]string {
+	init := make(map[string]string)
 
 	for _, sig := range signals {
 		name := shortName(sig.Signal.FullName)
@@ -197,7 +234,7 @@ func buildInit(signals []*vcd.SignalData, startTime uint64) map[string]any {
 type Change struct {
 	Time   uint64
 	Signal string
-	Value  any
+	Value  string
 }
 
 // buildEvents constructs the event list
@@ -236,7 +273,7 @@ func buildEvents(signals []*vcd.SignalData, startTime, endTime uint64, clock *Cl
 	}
 
 	currentTime := changes[0].Time
-	currentSet := make(map[string]any)
+	currentSet := make(map[string]string)
 
 	for _, ch := range changes {
 		if ch.Time != currentTime {
@@ -245,7 +282,7 @@ func buildEvents(signals []*vcd.SignalData, startTime, endTime uint64, clock *Cl
 				Set:  currentSet,
 			})
 			currentTime = ch.Time
-			currentSet = make(map[string]any)
+			currentSet = make(map[string]string)
 		}
 		currentSet[ch.Signal] = ch.Value
 	}
@@ -270,36 +307,23 @@ func shortName(fullName string) string {
 	return fullName[idx+1:]
 }
 
-// formatValue formats a value based on width
-func formatValue(value string, width int) any {
+// formatValue formats a value based on width and returns plain string
+func formatValue(value string, width int) string {
 	if width == 1 {
 		return value // "0", "1", "x", "z"
 	}
 
-	// Check for x/z
+	// Check for x/z - return as binary
 	if strings.ContainsAny(value, "xXzZ") {
-		return ValueWithMeta{
-			Value: value,
-			Width: width,
-			Radix: "bin",
-		}
+		return value
 	}
 
 	// Convert to hex
 	n, err := strconv.ParseUint(value, 2, 64)
 	if err != nil {
 		// Fallback to binary
-		return ValueWithMeta{
-			Value: value,
-			Width: width,
-			Radix: "bin",
-		}
+		return value
 	}
 
-	hexStr := fmt.Sprintf("%X", n)
-	return ValueWithMeta{
-		Value: hexStr,
-		Width: width,
-		Radix: "hex",
-	}
+	return fmt.Sprintf("%X", n)
 }
