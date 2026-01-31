@@ -136,7 +136,3 @@ sigscope query -s "udp_rx" -t 1000 -e 10000 waveform.vcd
 - **言語**: Go 1.24.3
 - **依存ライブラリ**: Bubble Tea, Lip Gloss, fsnotify
 - **機能**: VCDパース、TUI描画、ファイル監視、JSON出力
-
-## ライセンス
-
-（必要に応じて記載）
