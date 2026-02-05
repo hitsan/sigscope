@@ -1,5 +1,5 @@
 # Binaries
-sigscope
+/sigscope
 *.exe
 *.exe~
 *.dll
@@ -27,3 +27,7 @@ go.work
 
 *.vcd
 .envrc
+
+# Claude settings (except skills for distribution)
+/.claude/*
+!/.claude/skills/
