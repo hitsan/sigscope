@@ -9,7 +9,7 @@ const (
 	CharRisingEdge  = "/"  // Rising edge (0→1)
 	CharFallingEdge = "\\" // Falling edge (1→0)
 	CharUnknown     = "?"  // Unknown value
-	CharHighZ       = "~"  // High impedance
+	CharHighZ       = "Z"  // High impedance
 
 	// Bus signal characters
 	CharBusRise   = "X"  // Bus transition marker (single cell)
