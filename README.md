@@ -9,6 +9,8 @@ VCD (Value Change Dump) ファイルをターミナルで操作するツール�
 
 ## インストール
 
+### バイナリのビルド
+
 ```bash
 git clone <repository-url>
 cd sigscope
@@ -20,6 +22,16 @@ go build -o sigscope .
 ```bash
 go run . <command> [options]
 ```
+
+### Claude Code Skillのインストール
+
+このツールをClaude Codeから使用するためのスキルが含まれています。
+
+```bash
+cp -r .claude/skills/sigscope <path-to-project>/.claude/skills/
+```
+
+インストール後、Claude Codeで `/sigscope` コマンドが使用可能になります。
 
 ## 使い方
 
