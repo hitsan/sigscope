@@ -105,10 +105,6 @@ func handleKey(m model.Model, msg tea.KeyMsg) (model.Model, tea.Cmd) {
 	case "s":
 		m.ToggleSelectMode()
 
-	// Toggle waveform style
-	case "t":
-		m.ToggleClassicStyle()
-
 	// Toggle signal visibility (select mode only)
 	case " ":
 		if m.SelectMode {
@@ -174,7 +170,6 @@ func handleFileChanged(m model.Model, msg watcher.FileChangedMsg) (model.Model, 
 		Zoom:               m.Zoom,
 		SignalScrollOffset: m.SignalScrollOffset,
 		SelectMode:         m.SelectMode,
-		ClassicStyle:       m.ClassicStyle,
 		SignalVisible:      append([]bool{}, m.SignalVisible...),
 		SignalNames:        m.ExtractSignalNames(),
 	}

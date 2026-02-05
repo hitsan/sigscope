@@ -43,10 +43,9 @@ type Model struct {
 	SelectMode    bool   // true: 全信号選択モード
 
 	// Display state
-	Width           int  // Terminal width
-	Height          int  // Terminal height
-	SignalPaneWidth int  // Width of signal name pane
-	ClassicStyle    bool // true: use ▔▁│ style, false: use __/‾‾\__ style
+	Width           int // Terminal width
+	Height          int // Terminal height
+	SignalPaneWidth int // Width of signal name pane
 
 	// Mode
 	Mode         Mode
@@ -102,7 +101,6 @@ func NewModel(vcdFile *vcd.VCDFile, filename string) Model {
 		Width:           80,
 		Height:          24,
 		SignalPaneWidth: 22,
-		ClassicStyle:    false, // Default to __/‾‾\__ style
 		Mode:            ModeNormal,
 	}
 }
@@ -454,11 +452,6 @@ func (m *Model) ToggleSelectMode() {
 	}
 }
 
-// ToggleClassicStyle toggles between __/‾‾\__ and ▔▁│ styles
-func (m *Model) ToggleClassicStyle() {
-	m.ClassicStyle = !m.ClassicStyle
-	m.adjustSignalScroll()
-}
 
 // DisplaySignalCount returns the number of signals to display (depends on mode)
 func (m *Model) DisplaySignalCount() int {
@@ -477,7 +470,6 @@ type ViewState struct {
 	Zoom               float64
 	SignalScrollOffset int
 	SelectMode         bool
-	ClassicStyle       bool     // 表示スタイルを保持
 	SignalVisible      []bool   // 信号可視性を保持
 	SignalNames        []string // 名前でマッチング用
 }
@@ -516,9 +508,6 @@ func (m *Model) RestoreViewState(state ViewState) {
 
 	// 選択モード復元
 	m.SelectMode = state.SelectMode
-
-	// 表示スタイル復元
-	m.ClassicStyle = state.ClassicStyle
 
 	// 信号可視性を復元（名前でマッチング）
 	m.SignalVisible = make([]bool, len(m.Signals))

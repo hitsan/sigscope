@@ -9,7 +9,7 @@ import (
 )
 
 // RenderWaveformSingleLine renders a signal's waveform in single-line mode
-func RenderWaveformSingleLine(sig *vcd.SignalData, startTime, endTime uint64, width int, classicStyle bool) string {
+func RenderWaveformSingleLine(sig *vcd.SignalData, startTime, endTime uint64, width int) string {
 	if width <= 0 || endTime <= startTime {
 		return ""
 	}
@@ -18,7 +18,7 @@ func RenderWaveformSingleLine(sig *vcd.SignalData, startTime, endTime uint64, wi
 	result := make([]string, width)
 
 	if sig.Signal.Width == 1 {
-		renderSingleBitOneLine(sig, startTime, timePerChar, result, classicStyle)
+		renderSingleBitOneLine(sig, startTime, timePerChar, result)
 	} else {
 		renderBusOneLine(sig, startTime, timePerChar, result, width)
 	}
@@ -27,7 +27,7 @@ func RenderWaveformSingleLine(sig *vcd.SignalData, startTime, endTime uint64, wi
 }
 
 // renderSingleBitOneLine renders a single-bit signal in single-line mode
-func renderSingleBitOneLine(sig *vcd.SignalData, startTime uint64, timePerChar float64, result []string, classicStyle bool) {
+func renderSingleBitOneLine(sig *vcd.SignalData, startTime uint64, timePerChar float64, result []string) {
 	for i := range result {
 		charStartTime := startTime + uint64(float64(i)*timePerChar)
 		charEndTime := startTime + uint64(float64(i+1)*timePerChar)
@@ -46,49 +46,28 @@ func renderSingleBitOneLine(sig *vcd.SignalData, startTime uint64, timePerChar f
 			}
 		}
 
-		if classicStyle {
-			// Classic style: ▔▁│
-			if hasTransition {
-				result[i] = CharEdgeClassic // │
+		if hasTransition {
+			// Determine transition direction
+			if startValue == "0" && transitionTo == "1" {
+				result[i] = CharRisingEdge // /
+			} else if startValue == "1" && transitionTo == "0" {
+				result[i] = CharFallingEdge // \
 			} else {
-				switch startValue {
-				case "1":
-					result[i] = CharHighClassic // ▔
-				case "0":
-					result[i] = CharLowClassic // ▁
-				case "x", "X":
-					result[i] = CharUnknown // ?
-				case "z", "Z":
-					result[i] = CharHighZ // ~
-				default:
-					result[i] = CharUnknown
-				}
+				result[i] = CharUnknown // ?
 			}
 		} else {
-			// Modern style: __/‾‾\__
-			if hasTransition {
-				// Determine transition direction
-				if startValue == "0" && transitionTo == "1" {
-					result[i] = CharRisingEdge // /
-				} else if startValue == "1" && transitionTo == "0" {
-					result[i] = CharFallingEdge // \
-				} else {
-					result[i] = CharUnknown // ?
-				}
-			} else {
-				// Stable state
-				switch startValue {
-				case "1":
-					result[i] = CharHigh // ‾
-				case "0":
-					result[i] = CharLow // _
-				case "x", "X":
-					result[i] = CharUnknown // ?
-				case "z", "Z":
-					result[i] = CharHighZ // ~
-				default:
-					result[i] = CharUnknown
-				}
+			// Stable state
+			switch startValue {
+			case "1":
+				result[i] = CharHigh // ‾
+			case "0":
+				result[i] = CharLow // _
+			case "x", "X":
+				result[i] = CharUnknown // ?
+			case "z", "Z":
+				result[i] = CharHighZ // ~
+			default:
+				result[i] = CharUnknown
 			}
 		}
 	}

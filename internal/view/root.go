@@ -107,13 +107,7 @@ func renderStatusBar(m model.Model) string {
 			timeStr := formatTimeStatus(m.CursorTime)
 			zoomStr := fmt.Sprintf("Zoom: %.1fx", m.Zoom)
 
-			// 表示スタイル
-			styleStr := "__/‾‾\\__"
-			if m.ClassicStyle {
-				styleStr = "▔▁│"
-			}
-
-			helpStr := "j/k:↑↓ h/l:←→ +/-:zoom t:toggle s:select /:search q:quit"
+			helpStr := "j/k:↑↓ h/l:←→ +/-:zoom s:select /:search q:quit"
 
 			// 再読み込み通知（3秒間表示）
 			reloadIndicator := ""
@@ -121,7 +115,7 @@ func renderStatusBar(m model.Model) string {
 				reloadIndicator = "[RELOADED] "
 			}
 
-			status = fmt.Sprintf(" %sTime: %s | %s | Style: %s | %s", reloadIndicator, timeStr, zoomStr, styleStr, helpStr)
+			status = fmt.Sprintf(" %sTime: %s | %s | %s", reloadIndicator, timeStr, zoomStr, helpStr)
 		}
 	}
 

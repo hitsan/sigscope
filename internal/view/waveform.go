@@ -38,7 +38,7 @@ func renderNormalModeWaveformsSingleLine(m model.Model) string {
 		sig := m.Signals[globalIdx]
 
 		// Render waveform for this signal (single line)
-		waveform := render.RenderWaveformSingleLine(sig, m.TimeStart, m.TimeEnd, width, m.ClassicStyle)
+		waveform := render.RenderWaveformSingleLine(sig, m.TimeStart, m.TimeEnd, width)
 		runes := []rune(waveform)
 
 		// Apply grid lines
@@ -94,7 +94,7 @@ func renderSelectModeWaveformsSingleLine(m model.Model) string {
 
 		if m.SignalVisible[i] {
 			sig := m.Signals[i]
-			waveform := render.RenderWaveformSingleLine(sig, m.TimeStart, m.TimeEnd, width, m.ClassicStyle)
+			waveform := render.RenderWaveformSingleLine(sig, m.TimeStart, m.TimeEnd, width)
 			runes = []rune(waveform)
 		} else {
 			runes = []rune(strings.Repeat(" ", width))
