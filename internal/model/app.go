@@ -46,7 +46,7 @@ type Model struct {
 	Width           int  // Terminal width
 	Height          int  // Terminal height
 	SignalPaneWidth int  // Width of signal name pane
-	TwoLineMode     bool // true: 2-line per signal, false: 1-line per signal
+	ClassicStyle    bool // true: use ▔▁│ style, false: use __/‾‾\__ style
 
 	// Mode
 	Mode         Mode
@@ -102,7 +102,7 @@ func NewModel(vcdFile *vcd.VCDFile, filename string) Model {
 		Width:           80,
 		Height:          24,
 		SignalPaneWidth: 22,
-		TwoLineMode:     false, // Default to 1-line display
+		ClassicStyle:    false, // Default to __/‾‾\__ style
 		Mode:            ModeNormal,
 	}
 }
@@ -117,16 +117,7 @@ func (m Model) VisibleSignalCount() int {
 	// Reserve lines for: title, timeline, separator, status bar
 	available := m.Height - 4
 
-	if m.TwoLineMode {
-		// Each signal takes 2 lines (upper and lower)
-		signalCount := available / 2
-		if signalCount < 1 {
-			return 1
-		}
-		return signalCount
-	}
-
-	// Single-line mode: each signal takes 1 line
+	// Each signal takes 1 line
 	if available < 1 {
 		return 1
 	}
@@ -463,9 +454,9 @@ func (m *Model) ToggleSelectMode() {
 	}
 }
 
-// ToggleTwoLineMode toggles between 1-line and 2-line display mode
-func (m *Model) ToggleTwoLineMode() {
-	m.TwoLineMode = !m.TwoLineMode
+// ToggleClassicStyle toggles between __/‾‾\__ and ▔▁│ styles
+func (m *Model) ToggleClassicStyle() {
+	m.ClassicStyle = !m.ClassicStyle
 	m.adjustSignalScroll()
 }
 
@@ -486,7 +477,7 @@ type ViewState struct {
 	Zoom               float64
 	SignalScrollOffset int
 	SelectMode         bool
-	TwoLineMode        bool     // 表示モードを保持
+	ClassicStyle       bool     // 表示スタイルを保持
 	SignalVisible      []bool   // 信号可視性を保持
 	SignalNames        []string // 名前でマッチング用
 }
@@ -526,8 +517,8 @@ func (m *Model) RestoreViewState(state ViewState) {
 	// 選択モード復元
 	m.SelectMode = state.SelectMode
 
-	// 表示モード復元
-	m.TwoLineMode = state.TwoLineMode
+	// 表示スタイル復元
+	m.ClassicStyle = state.ClassicStyle
 
 	// 信号可視性を復元（名前でマッチング）
 	m.SignalVisible = make([]bool, len(m.Signals))

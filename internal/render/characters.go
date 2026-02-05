@@ -3,12 +3,20 @@ package render
 // Unicode characters for waveform rendering
 
 const (
-	// Single-bit waveform characters
-	CharHigh    = "▔"  // High level (upper line)
-	CharLow     = "▁"  // Low level (lower line)
-	CharEdge    = "│"  // Edge (vertical line connecting high and low)
-	CharUnknown = "?"  // Unknown value
-	CharHighZ   = "~"  // High impedance
+	// Modern style (__/‾‾\__) - Default
+	CharHigh        = "‾"  // High level
+	CharLow         = "_"  // Low level
+	CharRisingEdge  = "/"  // Rising edge (0→1)
+	CharFallingEdge = "\\" // Falling edge (1→0)
+
+	// Classic style (▔▁│)
+	CharHighClassic   = "▔" // High level (classic)
+	CharLowClassic    = "▁" // Low level (classic)
+	CharEdgeClassic   = "│" // Edge (classic)
+
+	// Common characters
+	CharUnknown = "?" // Unknown value
+	CharHighZ   = "~" // High impedance
 
 	// Bus signal characters
 	CharBusRise   = "X"  // Bus transition marker (single cell)
@@ -21,15 +29,15 @@ const (
 	CharCursor = "│"
 
 	// Box drawing
-	CharVertical   = "│"
-	CharHorizontal = "─"
-	CharTopLeft    = "┌"
-	CharTopRight   = "┐"
-	CharBottomLeft = "└"
+	CharVertical    = "│"
+	CharHorizontal  = "─"
+	CharTopLeft     = "┌"
+	CharTopRight    = "┐"
+	CharBottomLeft  = "└"
 	CharBottomRight = "┘"
-	CharTeeLeft    = "├"
-	CharTeeRight   = "┤"
-	CharTeeTop     = "┬"
-	CharTeeBottom  = "┴"
-	CharCross      = "┼"
+	CharTeeLeft     = "├"
+	CharTeeRight    = "┤"
+	CharTeeTop      = "┬"
+	CharTeeBottom   = "┴"
+	CharCross       = "┼"
 )

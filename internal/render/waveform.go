@@ -9,7 +9,7 @@ import (
 )
 
 // RenderWaveformSingleLine renders a signal's waveform in single-line mode
-func RenderWaveformSingleLine(sig *vcd.SignalData, startTime, endTime uint64, width int) string {
+func RenderWaveformSingleLine(sig *vcd.SignalData, startTime, endTime uint64, width int, classicStyle bool) string {
 	if width <= 0 || endTime <= startTime {
 		return ""
 	}
@@ -18,7 +18,7 @@ func RenderWaveformSingleLine(sig *vcd.SignalData, startTime, endTime uint64, wi
 	result := make([]string, width)
 
 	if sig.Signal.Width == 1 {
-		renderSingleBitOneLine(sig, startTime, timePerChar, result)
+		renderSingleBitOneLine(sig, startTime, timePerChar, result, classicStyle)
 	} else {
 		renderBusOneLine(sig, startTime, timePerChar, result, width)
 	}
@@ -27,7 +27,7 @@ func RenderWaveformSingleLine(sig *vcd.SignalData, startTime, endTime uint64, wi
 }
 
 // renderSingleBitOneLine renders a single-bit signal in single-line mode
-func renderSingleBitOneLine(sig *vcd.SignalData, startTime uint64, timePerChar float64, result []string) {
+func renderSingleBitOneLine(sig *vcd.SignalData, startTime uint64, timePerChar float64, result []string, classicStyle bool) {
 	for i := range result {
 		charStartTime := startTime + uint64(float64(i)*timePerChar)
 		charEndTime := startTime + uint64(float64(i+1)*timePerChar)
@@ -36,28 +36,59 @@ func renderSingleBitOneLine(sig *vcd.SignalData, startTime uint64, timePerChar f
 		startValue := sig.GetValueAt(charStartTime)
 
 		// Check for transitions within this character
+		var transitionTo string
 		hasTransition := false
 		for _, change := range sig.Changes {
 			if change.Time >= charStartTime && change.Time < charEndTime {
 				hasTransition = true
+				transitionTo = change.Value
 				break
 			}
 		}
 
-		if hasTransition {
-			result[i] = CharEdge
+		if classicStyle {
+			// Classic style: ▔▁│
+			if hasTransition {
+				result[i] = CharEdgeClassic // │
+			} else {
+				switch startValue {
+				case "1":
+					result[i] = CharHighClassic // ▔
+				case "0":
+					result[i] = CharLowClassic // ▁
+				case "x", "X":
+					result[i] = CharUnknown // ?
+				case "z", "Z":
+					result[i] = CharHighZ // ~
+				default:
+					result[i] = CharUnknown
+				}
+			}
 		} else {
-			switch startValue {
-			case "1":
-				result[i] = CharHigh
-			case "0":
-				result[i] = CharLow
-			case "x", "X":
-				result[i] = CharUnknown
-			case "z", "Z":
-				result[i] = CharHighZ
-			default:
-				result[i] = CharUnknown
+			// Modern style: __/‾‾\__
+			if hasTransition {
+				// Determine transition direction
+				if startValue == "0" && transitionTo == "1" {
+					result[i] = CharRisingEdge // /
+				} else if startValue == "1" && transitionTo == "0" {
+					result[i] = CharFallingEdge // \
+				} else {
+					result[i] = CharUnknown // ?
+				}
+			} else {
+				// Stable state
+				switch startValue {
+				case "1":
+					result[i] = CharHigh // ‾
+				case "0":
+					result[i] = CharLow // _
+				case "x", "X":
+					result[i] = CharUnknown // ?
+				case "z", "Z":
+					result[i] = CharHighZ // ~
+				default:
+					result[i] = CharUnknown
+				}
 			}
 		}
 	}
@@ -165,192 +196,6 @@ func renderBusOneLine(sig *vcd.SignalData, startTime uint64, timePerChar float64
 	}
 }
 
-// WaveformLines represents a 2-line waveform display
-type WaveformLines struct {
-	Upper string // Upper line
-	Lower string // Lower line
-}
-
-// RenderWaveform renders a signal's waveform for the given time window
-// Returns two lines: upper and lower for 2-line display
-func RenderWaveform(sig *vcd.SignalData, startTime, endTime uint64, width int) WaveformLines {
-	if width <= 0 || endTime <= startTime {
-		return WaveformLines{"", ""}
-	}
-
-	timePerChar := float64(endTime-startTime) / float64(width)
-	upperResult := make([]string, width)
-	lowerResult := make([]string, width)
-
-	if sig.Signal.Width == 1 {
-		renderSingleBit(sig, startTime, timePerChar, upperResult, lowerResult)
-	} else {
-		renderBus(sig, startTime, timePerChar, upperResult, lowerResult, width)
-	}
-
-	return WaveformLines{
-		Upper: strings.Join(upperResult, ""),
-		Lower: strings.Join(lowerResult, ""),
-	}
-}
-
-// renderSingleBit renders a single-bit signal in 2-line format
-func renderSingleBit(sig *vcd.SignalData, startTime uint64, timePerChar float64, upper []string, lower []string) {
-	for i := range upper {
-		charStartTime := startTime + uint64(float64(i)*timePerChar)
-		charEndTime := startTime + uint64(float64(i+1)*timePerChar)
-
-		// Use the value at the start of this cell
-		startValue := sig.GetValueAt(charStartTime)
-
-		// Check for transitions within this character
-		var transitionTo string
-		hasTransition := false
-		for _, change := range sig.Changes {
-			if change.Time >= charStartTime && change.Time < charEndTime {
-				hasTransition = true
-				transitionTo = change.Value
-				break
-			}
-		}
-
-		if hasTransition {
-			// Determine transition direction
-			switch {
-			case startValue == "1" && transitionTo == "0":
-				// High to Low
-				upper[i] = "┐"
-				lower[i] = "└"
-			case startValue == "0" && transitionTo == "1":
-				// Low to High
-				upper[i] = "┌"
-				lower[i] = "┘"
-			default:
-				// Unknown transition
-				upper[i] = "│"
-				lower[i] = "│"
-			}
-		} else {
-			// Stable state
-			switch startValue {
-			case "1":
-				upper[i] = "─"
-				lower[i] = " "
-			case "0":
-				upper[i] = " "
-				lower[i] = "─"
-			case "x", "X":
-				upper[i] = "?"
-				lower[i] = "?"
-			case "z", "Z":
-				upper[i] = "~"
-				lower[i] = "~"
-			default:
-				upper[i] = "?"
-				lower[i] = "?"
-			}
-		}
-	}
-}
-
-// renderBus renders a multi-bit bus signal (GTKWave style) in 2-line format
-func renderBus(sig *vcd.SignalData, startTime uint64, timePerChar float64, upper []string, lower []string, width int) {
-	// Find all value changes in the visible window
-	type segment struct {
-		startIdx int
-		endIdx   int
-		value    string
-	}
-
-	segments := make([]segment, 0)
-	currentValue := sig.GetValueAt(startTime)
-	currentStartIdx := 0
-
-	for i := 0; i < width; i++ {
-		charTime := startTime + uint64(float64(i)*timePerChar)
-		charEndTime := startTime + uint64(float64(i+1)*timePerChar)
-
-		// Check for value change in this character
-		for _, change := range sig.Changes {
-			// Treat changes at the cell start as belonging to this cell,
-			// and exclude the end to avoid right-shifted edges.
-			if change.Time >= charTime && change.Time < charEndTime {
-				// End current segment
-				if i > currentStartIdx {
-					segments = append(segments, segment{
-						startIdx: currentStartIdx,
-						endIdx:   i,
-						value:    currentValue,
-					})
-				}
-				currentValue = change.Value
-				currentStartIdx = i
-				break
-			}
-		}
-	}
-
-	// Add final segment
-	if currentStartIdx < width {
-		segments = append(segments, segment{
-			startIdx: currentStartIdx,
-			endIdx:   width,
-			value:    currentValue,
-		})
-	}
-
-	// Initialize with spaces
-	for i := range upper {
-		upper[i] = " "
-		lower[i] = " "
-	}
-
-	// Render each segment with upper/lower half blocks
-	for _, seg := range segments {
-		segWidth := seg.endIdx - seg.startIdx
-
-		// Convert binary value to hex
-		hexValue := binaryToHex(seg.value, sig.Signal.Width)
-
-		// Fill with lower half block (▄) in upper line and upper half block (▀) in lower line
-		// This creates a filled band in the middle
-		for i := seg.startIdx; i < seg.endIdx; i++ {
-			upper[i] = "▄"
-			lower[i] = "▀"
-		}
-
-		// Show transition as empty space at segment boundaries
-		if seg.startIdx > 0 {
-			upper[seg.startIdx] = " "
-			lower[seg.startIdx] = " "
-		}
-
-		// Display value in the center if there's enough space
-		if segWidth > len(hexValue)+2 {
-			valueStart := seg.startIdx
-			if seg.startIdx > 0 {
-				valueStart = seg.startIdx + 1
-			}
-			valueEnd := seg.endIdx
-
-			availableWidth := valueEnd - valueStart
-			displayValue := hexValue
-			if len(displayValue) > availableWidth {
-				displayValue = displayValue[:availableWidth]
-			}
-
-			// Center the value across both lines for better visibility
-			padding := (availableWidth - len(displayValue)) / 2
-			for idx, ch := range displayValue {
-				pos := valueStart + padding + idx
-				if pos < seg.endIdx {
-					// Place value characters on upper line
-					upper[pos] = string(ch)
-				}
-			}
-		}
-	}
-}
 
 // binaryToHex converts a binary string to hexadecimal
 func binaryToHex(binary string, width int) string {
