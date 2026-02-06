@@ -31,7 +31,7 @@ go run . <command> [options]
 cp -r .claude/skills/sigscope <path-to-project>/.claude/skills/
 ```
 
-インストール後、Claude Codeで `/sigscope` コマンドが使用可能になります。
+インストール後、Claude Codeに「デバッグして」「波形を確認して」などと依頼すると、VCDファイルのデバッグ支援が自動的に利用できます。
 
 ## 使い方
 
