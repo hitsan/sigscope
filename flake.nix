@@ -31,7 +31,7 @@
           pname = "sigscope";
           version = "0.1.0";
           src = ./.;
-          vendorHash = null; # Set to null for initial build, update after first run
+          vendorHash = "sha256-eLngNSbuhqOk1pfcQrJVKHSfELlwgg+ZrEBs+bOWvUM=";
         };
       }
     );
