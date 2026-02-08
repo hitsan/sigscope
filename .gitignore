@@ -5,6 +5,7 @@
 *.dll
 *.so
 *.dylib
+result
 
 # Test binary
 *.test
