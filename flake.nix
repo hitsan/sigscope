@@ -28,7 +28,7 @@
         };
 
         packages.default = pkgs.buildGoModule {
-          pname = "wave";
+          pname = "sigscope";
           version = "0.1.0";
           src = ./.;
           vendorHash = null; # Set to null for initial build, update after first run
