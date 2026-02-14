@@ -2,6 +2,10 @@
 
 VCD (Value Change Dump) ファイルを確認するCLIツール
 
+**[English](./README.md)**
+
+![sigscope デモ](./assets/demo.gif)
+
 ## 主な機能
 
 - **波形ビューア**: エンジニアがターミナル上で波形確認できます

@@ -4,6 +4,8 @@ A CLI tool for inspecting VCD (Value Change Dump) files.
 
 **[日本語版](./README.ja.md)**
 
+![sigscope demo](./assets/demo.gif)
+
 ## Features
 
 - **Waveform Viewer**: Engineers can inspect waveforms interactively in the terminal
