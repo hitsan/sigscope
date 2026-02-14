@@ -1,15 +1,22 @@
 # sigscope
 
-VCD (Value Change Dump) ファイルをターミナルで操作するツールセット。
+A CLI tool for inspecting VCD (Value Change Dump) files.
 
-## 主な機能
+**[日本語版](./README.ja.md)**
 
-- **波形ビューア**: エンジニアがターミナル上で波形確認できます
-- **JSON出力**: AIエージェントが信号リストや波形データをプログラマティックに取得できます
+## Features
 
-## インストール
+- **Waveform Viewer**: Engineers can inspect waveforms interactively in the terminal
+- **JSON Export**: AI agents can programmatically retrieve signal lists and waveform data
 
-### バイナリのビルド
+## Technical Specifications
+
+- **Language**: Go 1.24.3
+- **Dependencies**: Bubble Tea, Lip Gloss, fsnotify
+
+## Installation
+
+### Build Binary
 
 ```bash
 git clone <repository-url>
@@ -17,35 +24,29 @@ cd sigscope
 go build -o sigscope .
 ```
 
-または直接実行:
+### Claude Code Skill Installation
 
-```bash
-go run . <command> [options]
-```
-
-### Claude Code Skillのインストール
-
-このツールをClaude Codeから使用するためのスキルが含まれています。
+This tool includes a skill for use with Claude Code.
 
 ```bash
 cp -r .claude/skills/sigscope <path-to-project>/.claude/skills/
 ```
 
-インストール後、Claude Codeに「デバッグして」「波形を確認して」などと依頼すると、VCDファイルのデバッグ支援が自動的に利用できます。
+After installation, you can ask Claude Code to debug VCD files by saying "debug", "check waveform", etc. VCD debugging support will be available automatically.
 
-## 使い方
+## Usage
 
-### 1. 波形ビューア
+### 1. Waveform Viewer
 
-VCDファイルをインタラクティブに閲覧します。
+View VCD files interactively.
 
 ```bash
-sigscope path/to/file.vcd
+sigscope <path-to-project>/<vcd-file.vcd>
 ```
 
-#### 波形表示スタイル
+#### Waveform Display Format
 
-1ビット信号は以下の文字で表示されます：
+1-bit signals are displayed using the following characters:
 
 ```
 clk:  __/‾‾\__/‾‾\__/‾‾\__
@@ -53,45 +54,45 @@ clk:  __/‾‾\__/‾‾\__/‾‾\__
 
 - `_` = LOW (0)
 - `‾` = HIGH (1)
-- `/` = 立ち上がりエッジ (0→1)
-- `\` = 立ち下がりエッジ (1→0)
-- `?` = 不明値 (x)
+- `/` = Rising edge (0→1)
+- `\` = Falling edge (1→0)
+- `?` = Unknown value (x)
 - `Z` = High-Z (z)
 
-マルチビット信号（バス）は16進数で表示されます：
+Multi-bit signals (buses) are displayed in hexadecimal:
 
 ```
 data[7:0]: X--2A---X--FF---X--00---
 ```
 
-- `X` = 値の変化点
-- `-` = 値の継続
-- `2A`, `FF` = 16進数の値
+- `X` = Value change point
+- `-` = Stable value
+- `2A`, `FF` = Hexadecimal values
 
-#### TUI操作
+#### TUI Controls
 
-- `q` / `Ctrl+C`: 終了
-- `j` / `k` / `↑` / `↓`: シグナル移動
-- `h` / `l` / `←` / `→`: 時間ウィンドウをスクロール
-- `H` / `L` / `Shift+←` / `Shift+→`: ページ単位でスクロール
-- `+` / `-` / `0`: ズームイン / ズームアウト / リセット
-- `g` / `G`: 先頭 / 末尾へジャンプ
-- `c`: カーソル表示の切替
-- `[` / `]`: 前後の変化点へジャンプ
-- `/`: 検索モード
-- `s`: シグナル選択モード切替
-- `space`: 表示/非表示の切替（選択モードのみ）
-- `a` / `A`: 全表示 / 全非表示（選択モードのみ）
+- `q` / `Ctrl+C`: Exit
+- `j` / `k` / `↑` / `↓`: Navigate signals
+- `h` / `l` / `←` / `→`: Scroll time window
+- `H` / `L` / `Shift+←` / `Shift+→`: Page-wise scrolling
+- `+` / `-` / `0`: Zoom in / Zoom out / Reset
+- `g` / `G`: Jump to start / end
+- `c`: Toggle cursor display
+- `[` / `]`: Jump to previous / next transition
+- `/`: Search mode
+- `s`: Toggle signal selection mode
+- `space`: Toggle visibility (selection mode only)
+- `a` / `A`: Show all / Hide all (selection mode only)
 
-### 2. 信号リスト取得
+### 2. Signal List
 
-VCDファイル内の全信号とメタデータをJSON形式で出力します。
+Extract all signals and metadata from a VCD file in JSON format.
 
 ```bash
 sigscope list path/to/file.vcd
 ```
 
-**出力例:**
+**Output example:**
 ```json
 {
   "signals": [
@@ -103,35 +104,35 @@ sigscope list path/to/file.vcd
 }
 ```
 
-### 3. 波形データ抽出（query）
+### 3. Waveform Data Export (query)
 
-時系列イベントをJSON形式で出力します。変化した信号のみを記録する差分形式です。
+Extract time-series events in JSON format. Only changed signals are recorded in differential format.
 
 ```bash
 sigscope query [OPTIONS] path/to/file.vcd
 ```
 
-**オプション:**
-- `-s, --signals <pattern>`: 信号名パターン（部分一致、繰り返し可能）
-- `-t, --time-start <time>`: 開始時刻（デフォルト: 0）
-- `-e, --time-end <time>`: 終了時刻（デフォルト: VCD終了時刻）
+**Options:**
+- `-s, --signals <pattern>`: Signal name pattern (partial match, repeatable)
+- `-t, --time-start <time>`: Start time (default: 0)
+- `-e, --time-end <time>`: End time (default: VCD end time)
 
-**使用例:**
+**Usage examples:**
 ```bash
-# 全信号の波形データ
+# Export all signal waveforms
 sigscope query waveform.vcd
 
-# 特定信号のみ（部分一致）
+# Specific signals only (partial match)
 sigscope query -s clk -s data waveform.vcd
 
-# 時間範囲指定
+# Time range specification
 sigscope query -t 1000 -e 5000 waveform.vcd
 
-# 組み合わせ
+# Combined
 sigscope query -s "udp_rx" -t 1000 -e 10000 waveform.vcd
 ```
 
-**出力例:**
+**Output example:**
 ```json
 {
   "timescale": "1ps",
@@ -155,16 +156,11 @@ sigscope query -s "udp_rx" -t 1000 -e 10000 waveform.vcd
 }
 ```
 
-**出力形式の詳細:**
-- `timescale`: VCDファイルのタイムスケール（例: `"1ps"`, `"1ns"`）
-- `defs`: 各信号のビット幅と基数（hex/bin）
-- `clock`: 自動検出されたクロック情報（検出失敗時は`null`）
-- `init`: 開始時刻における各信号の初期値
-- `events`: 時刻順の変化イベント（変化した信号のみ記録）
+**Output format details:**
+- `timescale`: VCD file timescale (e.g., `"1ps"`, `"1ns"`)
+- `defs`: Signal bit widths and radix (hex/bin)
+- `clock`: Auto-detected clock information (null if not detected)
+- `init`: Initial values of each signal at start time
+- `events`: Time-ordered change events (only changed signals recorded)
 
-AIエージェント向けの詳細は[AGENT.md](./AGENT.md)を参照してください。
-
-## 技術仕様
-
-- **言語**: Go 1.24.3
-- **依存ライブラリ**: Bubble Tea, Lip Gloss, fsnotify
+For details on agent integration, see [AGENT.md](./AGENT.md).
