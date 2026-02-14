@@ -1,4 +1,4 @@
-module sigscope
+module github.com/hitsan/sigscope
 
 go 1.24.3
 

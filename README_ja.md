@@ -32,6 +32,13 @@ nix build
 ./result/bin/sigscope <path-to-project>/<vcd-file.vcd>
 ```
 
+### goコマンドでのインストール
+
+```bash
+go install github.com/hitsan/sigscope@latest
+sigscope <path-to-project>/<vcd-file.vcd>
+```
+
 ### Claude Code Skillのインストール
 
 このツールをClaude Codeから使用するためのスキルが含まれています。
