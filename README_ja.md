@@ -24,6 +24,14 @@ git clone <repository-url>
 cd sigscope
 go build -o sigscope .
 ```
+
+### Nixでのビルド
+
+```bash
+nix build
+./result/bin/sigscope <path-to-project>/<vcd-file.vcd>
+```
+
 ### Claude Code Skillのインストール
 
 このツールをClaude Codeから使用するためのスキルが含まれています。

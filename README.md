@@ -26,6 +26,13 @@ cd sigscope
 go build -o sigscope .
 ```
 
+### Build with Nix
+
+```bash
+nix build
+./result/bin/sigscope <path-to-project>/<vcd-file.vcd>
+```
+
 ### Claude Code Skill Installation
 
 This tool includes a skill for use with Claude Code.
